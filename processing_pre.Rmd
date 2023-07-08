@@ -1,0 +1,97 @@
+---
+title: "Processing script pre-study"
+author: "Friederike Vorwerk"
+date: `r format(Sys.time(), '%d %B %Y')`"
+output: html_document:
+    code_folding: hide
+    highlight: haddock
+    theme: flatly
+    toc: yes
+    toc_float: yes
+---
+
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(message=FALSE,
+                      warning=FALSE,
+                      cache.lazy=FALSE)
+```
+
+# Dependencies
+
+```{r}
+# package vector
+packages <- c("dplyr")
+
+# un-comment to install packages
+# for (i in 1:length(packages)){install.packages(packages[i], character.only = T)
+# }
+
+# load packages
+for (i in 1:length(packages)){
+  library(packages[i], character.only = T)
+}
+```
+
+# Reproducibility
+
+```{r}
+# un-comment to get R version
+# R.version
+# un-comment to set groundhog (i.e., run the code on the same versions as originally)
+# groundhog.library(packages, "2022-10-31")
+```
+
+# Load data
+
+```{r}
+data_pre <- read.csv("C:/Bochum/RUB/Master Thesis/Vorstudie/AR Intervention 2nd Pilot-Study_30. Juni 2023_10.32.csv", header = T, sep = ",")
+
+```
+
+
+# Clean data
+
+```{r}
+# exclude headers
+data_pre <-data_pre[-c(1,2),]
+
+# as numeric
+numeric_data <- sapply(data_pre, as.numeric)
+numeric_data <- as.data.frame(numeric_data)
+
+# exclude if one or more attention check fails
+# attention check 1: participants must have answered with 1 to be included in analyses 
+# attention check 2: participants must have answered with 5 to be included in analyses
+# attention check 3: participants must have answered with 1 to be included in analyses
+numeric_data <- subset(numeric_data, ac1==1 & ac2==5 & ac3==1) 
+```
+
+
+# Scale evaluation
+
+## System Trust 
+```{r}
+# exclude if IfSHD == 2; no I do not have a SHD
+systrust_data <- subset(numeric_data, IfSHD == 1)
+
+
+# se scale data
+systrust_data <- systrust_data[,c(56:67)]
+
+# se scale variable
+systrust_data$systrust_mean <- rowMeans(systrust_data)
+```
+
+
+## Symbol Trust
+```{r}
+symbtrust_data <- numeric_data
+
+# symbtrust scale data
+symbtrust_data <- symbtrust_data[,c(47:52)]
+symbtrust_data <- symbtrust_data[,-c(4)] # exclude comments
+
+# se scale variable
+symbtrust_data$symbtrust_mean <- rowMeans(symbtrust_data)
+```

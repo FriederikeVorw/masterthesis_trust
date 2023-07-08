@@ -1,0 +1,125 @@
+---
+title: "Analysis Prestudy"
+author: "Friederike Vorwerk"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output: html_document:
+    code_folding: hide
+    highlight: haddock
+    theme: flatly
+    toc: yes
+    toc_float: yes
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(message=FALSE,
+                      warning=FALSE,
+                      cache.lazy=FALSE)
+```
+
+# Dependencies
+
+```{r}
+# package vector
+packages <- c("dplyr","psych", "multilevel","MBESS","GPArotation", "tidyr", "ggplot2")
+
+# un-comment to install packages
+# for (i in 1:length(packages)){install.packages(packages[i], character.only = T)
+# }
+
+# load packages
+for (i in 1:length(packages)){
+  library(packages[i], character.only = T)
+}
+```
+
+# Scale evaluation
+
+## System Trust Trust per item
+
+```{r}
+# descriptive
+describe(systrust_data[,-13])
+# interpretation
+## mean 4-6 (sys_trust8 > 6, sys_trust5 < 4)
+## SD > 1.3 (sys_trust12 >1.1, sys_trust8 > .8) 
+
+# item total correlation > 0.3 (sys_trust4 < .3, sys_trust5<.1)
+item.total(systrust_data[,-13])
+
+# un-comment to plot single histograms
+# for (col in 1:12) {
+#     hist(systrust_data[,col])
+# }
+
+# plot all
+pairs.panels(systrust_data[,-13], smooth = FALSE, density = FALSE, jiggle = TRUE)
+```
+
+## System Trust total
+
+```{r}
+# system trust mean
+describe(systrust_data[,13])
+## m = 4.86 (SD = 0.78), skew of g1 = 0.1 and a kurtosis of g2 = −0.62
+
+# plot histogram
+ggplot(data = systrust_data, aes(x = systrust_mean)) +
+  geom_histogram(bins = 15) +
+  xlim(1,7)
+
+# plot density
+ggplot(data = systrust_data, aes(x = systrust_mean)) +
+  geom_density() +
+  geom_vline(aes(xintercept=mean(systrust_mean)), color = "blue", linetype ="dashed", size=1) +
+  xlim(1,7)
+
+# omega 
+ci.reliability(systrust_data[,-13], type = 'omega', interval.type = "ml")
+omega_systrust <- systrust_data[,-13] %>% omegaSem(nfactors = 1)
+omega_systrust
+```
+
+
+
+## Symbol Trust Trust per item
+```{r}
+# descriptive
+describe(symbtrust_data[,-6])
+# interpretation
+## mean 2.4-3.6 
+## SD > 1.2
+
+# item total correlation > 0.7 (symb_trust4 < .5)
+item.total(symbtrust_data[,-6])
+
+# un-comment to plot single histograms
+# for (col in 1:12) {
+#     hist(systrust_data[,col])
+# }
+
+# plot all
+pairs.panels(symbtrust_data[,-6], smooth = FALSE, density = FALSE, jiggle = TRUE)
+```
+
+## Symbol Trust total
+```{r}
+# symbol trust mean
+describe(symbtrust_data[,6])
+## m = 2.92 (SD = 1.08), skew of g1 = 0.23 and a kurtosis of g2 = −0.57
+
+# plot histogram
+ggplot(data = symbtrust_data, aes(x = symbtrust_mean)) +
+  geom_histogram(bins = 15) +
+  xlim(1,7)
+
+# plot density
+ggplot(data = symbtrust_data, aes(x = symbtrust_mean)) +
+  geom_density() +
+  geom_vline(aes(xintercept=mean(symbtrust_mean)), color = "blue", linetype ="dashed", size=1) +
+  xlim(1,7)
+
+# omega 
+ci.reliability(symbtrust_data[,-6], type = 'omega', interval.type = "ml")
+omega_symbtrust <- symbtrust_data[,-6] %>% omegaSem(nfactors = 1)
+omega_symbtrust
+```
