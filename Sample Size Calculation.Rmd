@@ -1,0 +1,40 @@
+---
+title: "Sample Size Analysis"
+author: "Friederike Vorwerk"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output:
+  html_document:
+    code_folding: hide
+    highlight: haddock
+    theme: flatly
+    toc: yes
+    toc_float: yes
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(message=FALSE,
+                      warning=FALSE,
+                      cache.lazy=FALSE)
+```
+
+```{r}
+library(MBESS)
+library(pwrss)
+```
+
+
+# Sample size hypothesis 1 (regression) -> needed N=96
+```{r}
+# group_5
+# get n
+ss.aipe.sc(psi = .25, c.weights=c(-0.25, -0.25, -0.25, -0.25, 1), conf.level = .95, width = .45)
+# set n
+sen_five_group <- ss.aipe.sc.sensitivity(true.psi=0.25,
+                                     	c.weights=c(-0.25, -0.25, -0.25, -0.25, 1),
+                                     	selected.n = 100, print.iter = F)
+sen_five_group$Summary
+```
+# Sample size hypothesis 2 (correlation) -> needed N=21
+```{r}
+pwrss.f.reg(r2 = 0.30, k = 1, power = 0.80, alpha = 0.05)
+```
