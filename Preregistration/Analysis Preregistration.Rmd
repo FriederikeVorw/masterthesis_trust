@@ -21,7 +21,7 @@ knitr::opts_chunk$set(message=FALSE,
 
 ```{r}
 # package vector
-packages <- c("ggplot2", "lmtest", "stats")
+packages <- c("ggplot2", "lmtest", "stats", "car")
 
 # un-comment to install packages
 # for (i in 1:length(packages)){install.packages(packages[i], character.only = T)
@@ -32,14 +32,9 @@ for (i in 1:length(packages)){
   library(packages[i], character.only = T)
 }
 ```
-# Preprocessing
-## match questionnaire with experimental data set
-### exclude all trials that were not finished/are incomplete, trials for which conditions in app vs questionnaire do not match
-#calculate reaction times for addition of device until agreement to terms and conditions for first device added
-#calculate mean values for symbol trust and system trust
 
 
-#Hypothesis 1: regression
+#Hypothesis 1: Covariance Analysis
 ```{r}
 
 mat <- matrix(c(-0.25,-0.25,-0.25-0.25))
@@ -49,16 +44,21 @@ contrasts(data$group) <- mat
 # check normal distribution with histogram
 ggplot(data, aes(x=symb_trust)) + geom_histogram()
 
-
-
 #Estimate Model
 symbgroup_model <- lm(symb_trust ~ group,
                data = data)
 
 summary(symbgroup_model)
 ```
+##Assumptions for Hypothesis 1
+```{r}
 
-#Hypothesis 2: model comparison
+
+```
+
+
+
+#Hypothesis 2: model comparison, likelihood ratio test
 ```{r}
 model0 <- glm(system_trust ~ 1, data=data)
 model1 <- glm(system_trust ~ symbol_trust, data=data)
@@ -68,17 +68,38 @@ lrtest(model0,model1)
 ```
 
 
+
 #Hypothesis 3: linear regression
 ```{r}
-# check normal distribution with histogram
-ggplot(reaction_data, aes(x=reactiontimes)) + geom_histogram()
-
-#possibly exclude outliers
-
-#check linearity  & homoscedacticity with scatter plot
-ggplot(reaction_data, aes(x=symb_trust, y=reactiontimes)) + geom_point()
-
 #modeling
 reactiontrust_model <- lm(reaction_data  ~ symb_trust, data = reaction_data)
 summary(reactiontrust_model)
+```
+##Assumptions of Linear Regression
+- linearity
+- normality of residuals
+- homoscedasticity
+- independent errors
+
+```{r}
+###check linearity with scatterplot
+ggplot(reaction_data, aes(x=symb_trust, y=reactiontimes)) + geom_point()
+
+### check normal distribution with histogram
+ggplot(reaction_data, aes(x=reactiontimes)) + geom_histogram()
+```
+##outliners and influential cases hypothesis 3
+```{r}
+#outliers
+reaction_data$standardized_residuals <- rstandard(reactiontrust_model) # should be <|2|
+
+# influential cases
+reaction_data$cooks_distance <- cooks.distance(reactiontrust_model) # should be < 1
+```
+### then identify cases
+
+###Homoscredasiticty
+```{r}
+# Breusch Pagan Test / Cook-Weisberg Test: non-significance is homoscedastic
+ncvTest(reactiontrust_model)
 ```
