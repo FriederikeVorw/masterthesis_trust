@@ -1,5 +1,5 @@
 ---
-title: "Preregistrtion"
+title: "Pre-Registrtion"
 author: "Friederike Vorwerk"
 date: "`r format(Sys.time(), '%d %B %Y')`"
 output:
@@ -18,10 +18,9 @@ knitr::opts_chunk$set(message=FALSE,
 ```
 
 # Dependencies
-
 ```{r}
 # package vector
-packages <- c("ggplot2", "lmtest", "stats", "car")
+packages <- c("ggplot2", "lmtest", "stats", "car", "nortest")
 
 # un-comment to install packages
 # for (i in 1:length(packages)){install.packages(packages[i], character.only = T)
@@ -33,16 +32,11 @@ for (i in 1:length(packages)){
 }
 ```
 
-
-#Hypothesis 1: Covariance Analysis
+# Hypothesis 1: Covariance Analysis
 ```{r}
 
-mat <- matrix(c(-0.25,-0.25,-0.25-0.25))
-
+mat <- matrix(c(1/2, -1/3, -1/3, -1/3, 1/2))
 contrasts(data$group) <- mat
-
-# check normal distribution with histogram
-ggplot(data, aes(x=symb_trust)) + geom_histogram()
 
 #Estimate Model
 symbgroup_model <- lm(symb_trust ~ group,
@@ -50,15 +44,60 @@ symbgroup_model <- lm(symb_trust ~ group,
 
 summary(symbgroup_model)
 ```
-##Assumptions for Hypothesis 1
+
+## Assumptions for Hypothesis 1
+
+### Visual Assumption Checks
+- correct model specification (linear?), homoscedasticity, outliers (row #)
+- normal distribution
+- homoscedasticity, outliers (even scattering?)
 ```{r}
-
-
+plot(symbgroup_model)
 ```
 
+###Homoscedasiticty
+```{r}
+# Breusch Pagan Test / Cook-Weisberg Test: non-significance is homoscedastic
+ncvTest(reactiontrust_model)
+```
+
+### Independent Errors
+```{r}
+# Durbin-Watson Test: close value to 2 is good vs. <1 or >3 not good; non-significance is looked for
+dwt(reactiontrust_model)
+```
+
+### Normal distribution of residuals
+```{r}
+# Lilliefors test: non-significance in ND
+lillie.test(resid(reactiontrust_model))
+
+# QQ plot with confidence intervals
+qqPlot(reactiontrust_model)
+```
+
+### No Multicollinearity of predictors
+```{r}
+# variance inflation factor
+vif(reactiontrust_model) # high values (e.g. 10) are problematic
+mean(vif(reactiontrust_model)) # average VIF > 1 regression may be biased
+# tolerance: close to 1 means predictors are un-correlated, <.2 problematic
+1/vif(reactiontrust_model)
+```
+
+## Outliners and influential cases hypothesis 1
+```{r}
+# outliers
+reaction_data$standardized_residuals <- rstandard(reactiontrust_model) # should be <|2|
+
+# influential cases
+reaction_data$cooks_distance <- cooks.distance(reactiontrust_model) # should be < 1
+```
+### Exclude cases
 
 
-#Hypothesis 2: model comparison, likelihood ratio test
+
+# Hypothesis 2: model comparison, likelihood ratio test
 ```{r}
 model0 <- glm(system_trust ~ 1, data=data)
 model1 <- glm(system_trust ~ symbol_trust, data=data)
@@ -69,7 +108,7 @@ lrtest(model0,model1)
 
 
 
-#Hypothesis 3: linear regression
+# Hypothesis 3: linear regression
 ```{r}
 #modeling
 reactiontrust_model <- lm(reaction_data  ~ symb_trust, data = reaction_data)
@@ -81,13 +120,27 @@ summary(reactiontrust_model)
 - homoscedasticity
 - independent errors
 
+### Visual Assumption Checks
 ```{r}
-###check linearity with scatterplot
+#check linearity with scatterplot
 ggplot(reaction_data, aes(x=symb_trust, y=reactiontimes)) + geom_point()
 
-### check normal distribution with histogram
+#check normal distribution with histogram
 ggplot(reaction_data, aes(x=reactiontimes)) + geom_histogram()
 ```
+
+###Homoscredasiticty
+```{r}
+# Breusch Pagan Test / Cook-Weisberg Test: non-significance is homoscedastic
+ncvTest(reactiontrust_model)
+```
+
+### Independant Errors
+```{r}
+# Durbin-Watson Test: close value to 2 is good vs. <1 or >3 not good; non-significance is looked for
+dwt(reactiontrust_model)
+```
+
 ##outliners and influential cases hypothesis 3
 ```{r}
 #outliers
@@ -97,9 +150,3 @@ reaction_data$standardized_residuals <- rstandard(reactiontrust_model) # should 
 reaction_data$cooks_distance <- cooks.distance(reactiontrust_model) # should be < 1
 ```
 ### then identify cases
-
-###Homoscredasiticty
-```{r}
-# Breusch Pagan Test / Cook-Weisberg Test: non-significance is homoscedastic
-ncvTest(reactiontrust_model)
-```
