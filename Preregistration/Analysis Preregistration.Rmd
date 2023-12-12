@@ -1,5 +1,5 @@
 ---
-title: "Pre-Registrtion"
+title: "Pre-Registration"
 author: "Friederike Vorwerk"
 date: "`r format(Sys.time(), '%d %B %Y')`"
 output:
@@ -20,7 +20,7 @@ knitr::opts_chunk$set(message=FALSE,
 # Dependencies
 ```{r}
 # package vector
-packages <- c("ggplot2", "lmtest", "stats", "car", "nortest")
+packages <- c("lmtest", "stats", "car", "nortest")
 
 # un-comment to install packages
 # for (i in 1:length(packages)){install.packages(packages[i], character.only = T)
@@ -40,7 +40,7 @@ contrasts(data$group) <- mat
 
 #Estimate Model
 symbgroup_model <- lm(symb_trust ~ group,
-               data = data)
+               data = symbgroup_data)
 
 summary(symbgroup_model)
 ```
@@ -48,52 +48,73 @@ summary(symbgroup_model)
 ## Assumptions for Hypothesis 1
 
 ### Visual Assumption Checks
-- correct model specification (linear?), homoscedasticity, outliers (row #)
+- linearity, homoscedasticity, outliers (row #)
 - normal distribution
 - homoscedasticity, outliers (even scattering?)
 ```{r}
 plot(symbgroup_model)
 ```
 
+## Outliners and influential cases
+```{r}
+# outliers
+symbgroup_data$standardized_residuals <- rstandard(symbgroup_model) # should be <|2|
+symbgroup_data$studentized_residuals <- rstudent(symbgroup_model) # should be <|3|
+
+# influential cases
+symbgroup_data$cooks_distance <- cooks.distance(symbgroup_model) # should be < 1
+symbgroup_data$dfbeta <- dfbeta(symbgroup_model)
+symbgroup_data$dffit <- dffits(symbgroup_model)
+symbgroup_data$leverage <- hatvalues(symbgroup_model) # should be < 3 or 2 times as large as the average leverage (k+1/n)
+symbgroup_data$covariance_ratios <- covratio(symbgroup_model) # within > 1 + [3(k + 1)/n] or > 1 + [3(k + 1)/n]
+
+#write table
+write.table(symbgroup_data, "../results/Symbol_trust_reaction_time_with_case_diagnostics.dat", sep ="\t", row.names = F)
+```
+
+### Identify cases
+```{r}
+# large residuals
+symbgroup_data$large_residuals <- symbgroup_data$standardized_residuals > 2 | se_regression_data$standardized_residuals < -2
+symbgroup_data[symbgroup_data$large_residuals,]
+# expect 95% of cases to have standardized residuals within about |2|
+# and 99% should lie within |2.5|
+
+# influential cases (only for cases for which large_residual is TRUE)
+symbgroup_data[symbgroup_data$large_residuals, c("cooks_distance", "leverage", "covariance_ratios")]
+```
 ###Homoscedasiticty
 ```{r}
 # Breusch Pagan Test / Cook-Weisberg Test: non-significance is homoscedastic
-ncvTest(reactiontrust_model)
+ncvTest(symbgroup_model)
 ```
 
 ### Independent Errors
 ```{r}
 # Durbin-Watson Test: close value to 2 is good vs. <1 or >3 not good; non-significance is looked for
-dwt(reactiontrust_model)
+dwt(symbgroup_model)
 ```
 
 ### Normal distribution of residuals
 ```{r}
 # Lilliefors test: non-significance in ND
-lillie.test(resid(reactiontrust_model))
+lillie.test(resid(symbgroup_model))
 
 # QQ plot with confidence intervals
-qqPlot(reactiontrust_model)
+qqPlot(symbgroup_model)
+
+# density pot of student residuals
+plot(density.default(x = symbgroup_data$studentized_residuals))
 ```
 
 ### No Multicollinearity of predictors
 ```{r}
 # variance inflation factor
-vif(reactiontrust_model) # high values (e.g. 10) are problematic
-mean(vif(reactiontrust_model)) # average VIF > 1 regression may be biased
+vif(symbgroup_model) # high values (e.g. 10) are problematic
+mean(vif(symbgroup_model)) # average VIF > 1 regression may be biased
 # tolerance: close to 1 means predictors are un-correlated, <.2 problematic
-1/vif(reactiontrust_model)
+1/vif(symbgroup_model)
 ```
-
-## Outliners and influential cases hypothesis 1
-```{r}
-# outliers
-reaction_data$standardized_residuals <- rstandard(reactiontrust_model) # should be <|2|
-
-# influential cases
-reaction_data$cooks_distance <- cooks.distance(reactiontrust_model) # should be < 1
-```
-### Exclude cases
 
 
 
@@ -122,31 +143,58 @@ summary(reactiontrust_model)
 
 ### Visual Assumption Checks
 ```{r}
-#check linearity with scatterplot
-ggplot(reaction_data, aes(x=symb_trust, y=reactiontimes)) + geom_point()
-
-#check normal distribution with histogram
-ggplot(reaction_data, aes(x=reactiontimes)) + geom_histogram()
+plot(reactiontrust_model)
 ```
 
-###Homoscredasiticty
+##outliners and influential cases hypothesis 3
+```{r}
+# outliers
+reaction_data$standardized_residuals <- rstandard(reactiontrust_model) # should be <|2|
+reaction_data$studentized_residuals <- rstudent(reactiontrust_model) # should be <|3|
+
+# influential cases
+reaction_data$cooks_distance <- cooks.distance(reactiontrust_model) # should be < 1
+reaction_data$dfbeta <- dfbeta(reactiontrust_model)
+reaction_data$dffit <- dffits(reactiontrust_model)
+reaction_data$leverage <- hatvalues(reactiontrust_model) # should be < 3 or 2 times as large as the average leverage (k+1/n)
+reaction_data$covariance_ratios <- covratio(reactiontrust_model) # within > 1 + [3(k + 1)/n] or > 1 + [3(k + 1)/n]
+
+# write table
+write.table(reaction_data, "../results/Reaction_time_model_with_case_diagnostics.dat", sep ="\t", row.names = F)
+```
+
+### then identify cases
+```{r}
+# large residuals
+reaction_data$large_residuals <- reaction_data$standardized_residuals > 2 | se_regression_data$standardized_residuals < -2
+reaction_data[reaction_data$large_residuals,]
+# expect 95% of cases to have standardized residuals within about |2|
+# and 99% should lie within |2.5|
+
+# influential cases (only for cases for which large_residual is TRUE)
+reaction_data[reaction_data$large_residuals, c("cooks_distance", "leverage", "covariance_ratios")]
+```
+
+### Homoscredasiticty
 ```{r}
 # Breusch Pagan Test / Cook-Weisberg Test: non-significance is homoscedastic
 ncvTest(reactiontrust_model)
 ```
 
-### Independant Errors
+### Independent Errors
 ```{r}
 # Durbin-Watson Test: close value to 2 is good vs. <1 or >3 not good; non-significance is looked for
 dwt(reactiontrust_model)
 ```
 
-##outliners and influential cases hypothesis 3
+### Normal distribution of residuals
 ```{r}
-#outliers
-reaction_data$standardized_residuals <- rstandard(reactiontrust_model) # should be <|2|
+# Lilliefors test: non-significance in ND
+lillie.test(resid(reactiontrust_model))
 
-# influential cases
-reaction_data$cooks_distance <- cooks.distance(reactiontrust_model) # should be < 1
+# QQ plot with confidence intervals
+qqPlot(reactiontrust_model)
+
+# density pot of student residuals
+plot(density.default(x = reaction_data$studentized_residuals))
 ```
-### then identify cases
