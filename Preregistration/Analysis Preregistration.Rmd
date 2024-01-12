@@ -35,7 +35,7 @@ for (i in 1:length(packages)){
 # Hypothesis 1: Regression Model (Covariance Analysis)
 ```{r}
 
-mat <- matrix(c(1/2, -1/3, -1/3, -1/3, 1/2))
+mat <- matrix(c(0.25, 0.25, 0.25, 0.25, -1))
 contrasts(data$group) <- mat
 
 #Estimate Model
