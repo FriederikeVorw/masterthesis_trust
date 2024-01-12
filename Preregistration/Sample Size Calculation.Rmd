@@ -27,10 +27,10 @@ library(pwrss)
 ```{r}
 # group_5
 # get n
-ss.aipe.sc(psi = .25, c.weights=c(-0.25, -0.25, -0.25, -0.25, 1), conf.level = .95, width = .45)
+ss.aipe.sc(psi = 0.25, c.weights = c(0.25, 0.25, 0.25, 0.25, -1), conf.level = 0.95, width = 0.45)
 # set n
 sen_five_group <- ss.aipe.sc.sensitivity(true.psi=0.25,
-                                     	c.weights=c(-0.25, -0.25, -0.25, -0.25, 1),
+                                     	c.weights=c(0.25, 0.25, 0.25, 0.25, -1),
                                      	selected.n = 100, print.iter = F)
 sen_five_group$Summary
 ```
